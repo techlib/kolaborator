@@ -1,0 +1,4 @@
+sqlsoup
+sqlalchemy
+twisted
+txpostgres
