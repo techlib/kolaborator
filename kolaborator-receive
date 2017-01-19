@@ -1,0 +1,180 @@
+#!/usr/bin/python3 -tt
+import sys
+import email
+import smtplib
+import datetime
+import io
+import re
+import xml.etree.ElementTree as ET
+
+
+# Data are accessed through SQLSoup, using SQLAlchemy.
+from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy import create_engine
+from sqlsoup import SQLSoup
+
+# Command line arguments follow the GNU conventions.
+from getopt import gnu_getopt
+from sys import argv, stderr
+
+# Configuration is stored in a simple ini file.
+from configparser import ConfigParser
+
+
+if __name__ == '__main__':
+    def do_start(config):
+
+        # Read database configuration options.
+        db_url = config.get('database', 'url')
+
+        # Default to much saner database query defaults and always
+        # commit and/or flush statements explicitly.
+        factory = sessionmaker(autocommit=False, autoflush=False)
+
+        # Prepare database connection with table reflection.
+        engine = create_engine(db_url)
+        session = scoped_session(sessionmaker(autocommit=False, autoflush=False))
+        db = SQLSoup(engine, session=session)
+        analyze(db, config)
+
+
+
+    def analyze(db, config):
+        msg = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8').read()
+        msg = email.message_from_string(msg)
+
+        xml=None
+        time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
+
+
+        #Find message-id? Case sensitive, could have '*' at beginning
+        for key in msg:
+            if re.match("\*?(M|m)essage-(I|i)(d|D)",key):
+                msg_id = msg[key]
+
+        # Save subject if it has Ticket number
+        if re.match(".*(T|t)icket.*",msg['Subject']):
+            subject = (msg['Subject'])
+
+        # Walk through message and find xml in body
+        for part in msg.walk():
+            if part.get_content_maintype() != 'multipart':
+                text = part.get_payload(decode=True)
+                text = text.decode()
+                beginning = text.find('<?xml')
+                end = text.find('</Infringement>')
+                if beginning >= 0 and end >= 0:
+                    xml = text[beginning:end+15]
+
+        # Try to parse ACNS notice, otherwise forward message
+        try:
+            #
+            ns = {'ACNS': 'http://www.acns.net/ACNS'}
+
+            root = ET.fromstring(xml)
+
+            for case in root.findall('ACNS:Case', ns):
+                case_id = case.find('ACNS:ID', ns)
+
+            for complainant in root.findall('ACNS:Complainant', ns):
+                complainant_entity = complainant.find('ACNS:Entity', ns)
+                complainant_email = complainant.find('ACNS:Email', ns)
+
+            for service_provider in root.findall('ACNS:Service_Provider', ns):
+                provider_entity = service_provider.find('ACNS:Entity', ns)
+                provider_email = service_provider.find('ACNS:Email', ns)
+
+
+            for source in root.findall('ACNS:Source', ns):
+                source_time_stamp = source.find('ACNS:TimeStamp', ns)
+                ip_address = source.find('ACNS:IP_Address', ns)
+                port = source.find('ACNS:Port', ns)
+
+            for content in root.findall('ACNS:Content', ns):
+                for item in content.findall('ACNS:Item', ns):
+                    content_time_stamp = item.find('ACNS:TimeStamp', ns)
+                    filename = item.find('ACNS:FileName', ns)
+
+            # Insert parsed data tu database
+            db.infringements.insert(
+                case_id=case_id.text,complainant_entity=complainant_entity.text,
+                complainant_email=complainant_email.text,
+                provider_entity=provider_entity.text,
+                provider_email=provider_email.text,
+                source_timestamp=source_time_stamp.text,
+                ip_address=ip_address.text, port=port.text,
+                content_timestamp=content_time_stamp.text,
+                filename=filename.text, message_id=msg_id, subject=subject,
+                xml=xml, status='new'
+            )
+            db.commit()
+
+        except:
+            forward(msg, config)
+
+    def forward(message, config):
+        smtp_host = config.get('email', 'url')
+        smtp_port = config.get('email', 'port')
+        user = config.get('email', 'user')
+        passwd = config.get('email', 'password')
+        to_addr = config.get('email', 'to')
+        from_addr = config.get('email', 'from')
+        subject = "From: " + message['From'] + " Subject: " + message['Subject']
+
+        # Replace mail headers
+        message.replace_header("To", to_addr)
+        message.replace_header("From", from_addr)
+        message.replace_header("Subject", subject)
+        message.replace_header("Return-path", from_addr)
+
+        # Open SMTP connection and send message
+        smtp = smtplib.SMTP(smtp_host, smtp_port)
+        smtp.starttls()
+        smtp.login(user, passwd)
+        smtp.sendmail(from_addr, to_addr, message.as_string())
+        smtp.quit()
+
+
+    def do_help(*args, **kwargs):
+        print('Usage: kolaborator-receive [--config=/etc/kolaborator.ini]')
+        print('')
+        print('')
+        print('OPTIONS:')
+        print('  --help, -h          Display this help.')
+        print('  --version, -V       Display version info.')
+        print('')
+        print('  --config, -c file   Load alternative configuration file.')
+        print('')
+        print('Report bugs at <http://github.com/techlib/kolaborator>.')
+
+    def do_version(*args, **kwargs):
+        print('kolaborator-receive  (NTK) 1')
+
+    # Parse command line arguments.
+    opts, args = gnu_getopt(argv, 'hVc:', ['help', 'version', 'config='])
+
+    action = do_start
+    config_path = 'config/kolaborator.ini'
+
+    for k, v in opts:
+        if k in ('--help', '-h'):
+            action = do_help
+        elif k in ('--version', '-V'):
+            action = do_version
+        elif k in ('--config', '-c'):
+            config_path = v
+
+    # Load the configuration from file.
+    if action not in (do_help, do_version):
+        config = ConfigParser()
+        config.read(config_path)
+
+    # Load the configuration from file.
+    config = ConfigParser()
+    config.read(config_path)
+
+    # Perform the selected action.
+    action(config=config)
+
+# vim:set sw=4 ts=4 et:
+# -*- coding: utf-8 -*-

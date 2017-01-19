@@ -95,7 +95,7 @@ if __name__ == '__main__':
         print('')
         print('  --config, -c file   Load alternative configuration file.')
         print('')
-        print('Report bugs at <http://github.com/techlib/kolaboratr>.')
+        print('Report bugs at <http://github.com/techlib/kolaborator>.')
 
     def do_version(*args, **kwargs):
         print('kolaborator-daemon (NTK) 1')
