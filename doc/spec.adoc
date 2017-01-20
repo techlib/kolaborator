@@ -1,0 +1,81 @@
+= Kolaborátor
+Jan Dvořák <jan.dvorak@techlib.cz>
+:numbered:
+:icons: font
+:lang: cs
+:note-caption: Poznámka
+:warning-caption: Pozor
+
+== Úvod
+
+Národní technická knihovna je zaplavena upozorněními zástupců vykonavatelů majetkových práv k audiovizuálním dílům. Tito zástupci upozorňují CESNET a potažmo i NTK na potenciálně protiprávní způsoby šíření děl uživateli naší sítě.
+
+[ditaa,align="center"]
+....
+ /------------\
+ | IP Echelon +=----------\
+ \------------/           |    email    /-------\
+                          +------------>|  NTK  |
+ /------------\           |             \-------/
+ |   CESNET   +=----------/
+ \------------/
+....
+
+
+== Řešení
+
+Samotná oznámení o potenciálních problémech nemají žádnou právní hodnotu. Faktem však je, že dle smluvních podmínek CESNETu bychom neměli takové protiprávní chování našim uživatelům umožňovat. Z praktického hlediska tak máme na výběr ze dvou možností:
+
+- Automaticky detekovat problematické technologie (BitTorrent) a porušovat princip síťové neutrality jejich blokováním.
+
+- Řešit každý incident jednotlivě a využít patřičné klauzule o nedovoleném využití síťových prostředků v knihovním řádu.
+
+Protože je pro nás svoboda a otevřenost důležitější než pohodlí, volíme druhou možnost. Abychom však předešli přílišné administrativní zátěži, vytváříme automatický systém, který za nás obstará celý proces od přijetí stížnosti až po napomenutí uživatele a případnou eskalaci při recidivě.
+
+
+== Příjem stížností
+
+Součástí těchto automatizovaných stížností jsou i XML přílohy, které popisují charakter síťové komunikace, související s daným incidentem.
+
+Náš nástroj přijme takové stížnosti napojením na emailový server a čtením přijatých zpráv ze standardního vstupu. Následně veškeré stížnosti uloží do databáze v plném znění (tedy jako XML).
+
+
+== Vyhodnocení
+
+Návazný nástroj, který bude stížnosti vyhodnocovat bude mít přístup k:
+
+Informacím o síťovém provozu::
+Data získaná z hraničního prvku, která určují které vnitřní IP adresy komunikovaly s kterými vnějšími IP adresami, na jakém portu a kdy.
+
+Informacím o přidělených IP adresách::
+Tedy patrně logům systému DHCP, ze kterých je možné určit, jakou IP adresu mělo přiřazeno zařízení s danou fyzickou adresu v danou dobu.
+
+Informacím o uživatelích vnitřní sítě::
+Data získaná ze systémů RADIUS, který obstarávají kontrolu přístupu do našich sítí. Z dat těchto systémů je možné určit, který uživatel je držitelem zařízení s danou fyzickou adresou.
+
+Informacím o uživatelích WiFi::
+V případě WiFi sítí je často možné na základě IP adresy dohledat přímo přihlašovací jméno uživatele, protože to je vyžadováno k připojení.
+
+Databázi uživatelů::
+Tedy pravděpodobně LDAP, ve kterém bude možné na základě uživatelského jména dohledat email a další informace o uživateli, kterého se incident týká.
+
+Po vyhodnocení dat z těchto systémů nástroj rozhodne, zda-li je schopen
+přesně určit uživatele. Mohou tak nastat následující situace:
+
+Uživatel není znám::
+Nepodařilo se zjistit, o kterého uživatele se jedná. V tomto případě je tento fakt ohlašovateli sdělen a incident je uzavřen.
+
+Uživatel pochází ze sítě eduroam::
+O uživatelích z této sítě neevidujeme žádné informace a to ani kontaktní. Možnou reakcí je odeslání emailu na abuse adresu jeho domovské instituce, ale pravděpodobnost jejího zpracování je mizivá. Ohlašovateli je oznámeno, že nad tímto uživatelem nemáme kontrolu a případně, že jsme incident postoupili jeho domovské instituci.
+
+Uživatel je znám::
+Pokud se jednalo o první obvinění, uživatele automaticky upozorníme emailem a oznamovateli sdělíme, že byl uživatel napomenut. V případě, že se jedná o opakované obvinění, oznamovateli sdělíme, že bylo s uživatelem zahájeno řízení pro případné porušení knihovního řádu a věc postoupíme emailem odpovědné osobě z odboru služeb.
+
+
+== Evidence
+
+Evidence incidentů uchovává data alespoň po dobu dvou let, přičemž opakovaným obviněním se rozumí takové, které systém přijme dříve než jeden rok po předchozím.
+
+Do evidence je oprávněným osobám umožněno nahlížet pomocí webového portálu.
+
+// vim:set spell spelllang=cs:
