@@ -24,12 +24,14 @@ class Kolaborator(object):
     def process(self, item_id):
         """Further process the notification, get all the details and find the perpetrator"""
         notice = self.db.infringements.get(item_id)
-        internal_ip = search_flow(notice.ip_address, notice.port, notice.source_timestamp)
-        eduroam, staff, user = search_radius(internal_ip, notice.source_timestamp)
+        internal_ip = self.search_flow(notice.ip_address, notice.port, notice.source_timestamp)
+        eduroam, staff, user = self.search_radius(internal_ip, notice.source_timestamp)
         if eduroam:
-            # send notification to users eduroam institution
+            # send notification to user's eduroam institution
         else:
-            # write row into table and if more than 3 do something, else notify the user of inapropriate activity
+            # write row into table and if more than 3 do something?, else notify the user of inappropriate activity
+
+        # self.send_response(item_id)
 
 
     def search_flow(self, external_ip, port, timestamp):
@@ -84,11 +86,11 @@ class Kolaborator(object):
 
         return eduroam, staff, user
 
-    def send_message(self):
+    def send_message(self, item_id, email):
         """Send warning to the user / eduroam institution"""
         return
 
-    def send_response(self):
+    def send_response(self, item_id):
         """Reply to complainant"""
         return
 # vim:set sw=4 ts=4 et:
