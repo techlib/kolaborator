@@ -24,15 +24,15 @@ class Kolaborator(object):
     def process(self, item_id):
         """Further process the notification, get all the details and find the perpetrator"""
         notice = self.db.infringements.get(item_id)
-        internal_ip = find_flow(notice.ip_address, notice.port, notice.source_timestamp)
-        eduroam, staff, user = find_radius(internal_ip, notice.source_timestamp)
+        internal_ip = search_flow(notice.ip_address, notice.port, notice.source_timestamp)
+        eduroam, staff, user = search_radius(internal_ip, notice.source_timestamp)
         if eduroam:
             # send notification to users eduroam institution
         else:
             # write row into table and if more than 3 do something, else notify the user of inapropriate activity
 
 
-    def find_flow(self, external_ip, port, timestamp):
+    def search_flow(self, external_ip, port, timestamp):
         """Look into netflow for internal ip address of the perpetrator"""
 
         query = 'select * \
@@ -53,7 +53,7 @@ class Kolaborator(object):
 
         return res[0]['internal_addr']
 
-    def find_radius(self, internal_ip, timestamp):
+    def search_radius(self, internal_ip, timestamp):
         """Find the user,to whom was the internal ip address leased"""
         # look into radius if it is eduroam user, reader or employee
         query = 'select \
