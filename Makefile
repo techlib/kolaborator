@@ -3,7 +3,7 @@
 adocs = $(wildcard doc/*.adoc)
 htmls = $(adocs:.adoc=.html)
 pdfs  = $(adocs:.adoc=.pdf)
-pys   = $(shell find indoktrinator -name '*.py')
+pys   = $(shell find kolaborator -name '*.py')
 
 all: doc
 doc: html

@@ -71,7 +71,7 @@ if __name__ == '__main__':
         notifier = Notifier(reactor, db_url)
 
         # Prepare the manager that runs in an exclusive thread.
-        manager = Manager(db, db_flow, db_radius, notifier, **manager_opts)
+        manager = Manager(db, db_flow, db_radius, config, notifier, **manager_opts)
 
         # Run the startup code as the first thing.
         reactor.callLater(0, manager.start)

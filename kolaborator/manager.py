@@ -5,14 +5,20 @@ from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
 from twisted.python import log
 
-from simplejson import dump, load
+from ldap3 import Server, Connection, ALL
 
+import smtplib
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from string import Template
 
 __all__ = ['Manager']
 
 
 class Manager:
-    def __init__(self, db, db_flow, db_radius, notifier):
+    def __init__(self, db, db_flow, db_radius, config, notifier):
         self.db = db
         self.db_flow = db_flow
         self.db_radius = db_radius
@@ -59,6 +65,8 @@ class Manager:
             log.msg('TODO: Send notification to users eduroam institution...')
         else:
             log.msg('TODO: Send notification to the user (if possible)...')
+            cn, email = self.search_ldap(username)
+            self.notify_user(email, notice)
 
         log.msg('TODO: Write resolution to the database...')
 
@@ -94,12 +102,65 @@ class Manager:
                   update_time >= :ts
         ''', params={'addr': internal_ip, 'ts': timestamp}).first()
 
-        if row is not None:
+        if row is None:
             return None, None, None
 
         realm = row.realm if row.realm != 'NULL' else None
 
         return row.user, row.username, realm
 
+    def search_ldap(self, username):
+        """
+        Find user's email and CN on ldap
+        """
+
+        ldap_server = self.get.config('ldap', 'server')
+        ldap_user = self.get.config('ldap', 'user')
+        ldap_secret = self.get.config('ldap', 'secret')
+        ldap_unit = self.get.config('ldap', 'unit')
+
+        server = Server(ldap_server, get_info=ALL)
+        conn = Connection(server, ldap_user, ldap_secret, auto_bind=True)
+        conn.search(ldap_unit, '(&(objectclass=person)(uid=' + username + '))', attributes=['cn', 'mail'])
+        entry = conn.entries[0]
+        mail = entry.mail.values[0]
+        cn = entry.cn.values[0]
+
+        return cn, email
+
+    def notify_user(self, to_addr, notice):
+        """
+        Notify user via email
+        """
+
+        smtp_host = config.get('email', 'url')
+        smtp_port = config.get('email', 'port')
+        smtp_user = config.get('email', 'user')
+        smtp_passwd = config.get('email', 'password')
+
+        from_addr = self.config.get('email', 'from')
+        msg = MIMEMultipart()
+        msg['Subject'] = "Some clever subject"
+        msg['From'] = from_addr
+        msg['To'] = to_addr
+
+        message_template = open( '../email_templates/notify_user' )
+        d = { 'filename':notice.filename, 'timestamp':notice.source_timestamp }
+
+        text = Template( message_template.read() ).substitute(d)
+
+        message_template.close()
+
+        part = MIMEText(text, 'plain')
+        msg.attach(part)
+
+        smtp = smtplib.SMTP(smtp_host, smtp_port)
+        smtp.starttls()
+        smtp.login(smtp_user, smtp_passwd)
+
+        smtp.sendmail(from_addr, to_addr, msg.as_string())
+        smtp.quit()
+
+        return
 
 # vim:set sw=4 ts=4 et:
