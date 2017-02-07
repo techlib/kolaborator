@@ -63,12 +63,23 @@ class Manager:
 
         if realm is not None:
             log.msg('TODO: Send notification to users eduroam institution...')
+            db.processed.insert(
+                infringement_id = incident_id,
+                internal_ip = internal_ip,
+                eduroam = true,
+                eduroam_user = username
+            )
         else:
-            log.msg('TODO: Send notification to the user (if possible)...')
             cn, email = self.search_ldap(username)
             self.notify_user(email, notice)
-
-        log.msg('TODO: Write resolution to the database...')
+            db.processed.insert(
+                infringement_id = incident_id,
+                internal_ip = internal_ip,
+                eduroam = false,
+                cn = cn
+            )
+        notice.status = 'processed'
+        db.commit()
 
     def search_flow(self, external_ip, port, timestamp):
         """
