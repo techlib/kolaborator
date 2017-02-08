@@ -23,6 +23,7 @@ class Manager:
         self.db_flow = db_flow
         self.db_radius = db_radius
         self.notifier = notifier
+        self.config = config
 
     def start(self):
         log.msg('Starting manager...')
@@ -80,6 +81,7 @@ class Manager:
             )
         notice.status = 'processed'
         db.commit()
+        log.msg('Information inserted to db.')
 
     def search_flow(self, external_ip, port, timestamp):
         """
@@ -125,10 +127,10 @@ class Manager:
         Find user's email and CN on ldap
         """
 
-        ldap_server = self.get.config('ldap', 'server')
-        ldap_user = self.get.config('ldap', 'user')
-        ldap_secret = self.get.config('ldap', 'secret')
-        ldap_unit = self.get.config('ldap', 'unit')
+        ldap_server = self.config.get('ldap', 'server')
+        ldap_user = self.config.get('ldap', 'user')
+        ldap_secret = self.config.get('ldap', 'secret')
+        ldap_unit = self.config.get('ldap', 'unit')
 
         server = Server(ldap_server, get_info=ALL)
         conn = Connection(server, ldap_user, ldap_secret, auto_bind=True)
@@ -144,10 +146,10 @@ class Manager:
         Notify user via email
         """
 
-        smtp_host = config.get('email', 'url')
-        smtp_port = config.get('email', 'port')
-        smtp_user = config.get('email', 'user')
-        smtp_passwd = config.get('email', 'password')
+        smtp_host = self.config.get('email', 'url')
+        smtp_port = self.config.get('email', 'port')
+        smtp_user = self.config.get('email', 'user')
+        smtp_passwd = self.config.get('email', 'password')
 
         from_addr = self.config.get('email', 'from')
         msg = MIMEMultipart()
