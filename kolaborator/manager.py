@@ -64,23 +64,23 @@ class Manager:
 
         if realm is not None:
             log.msg('TODO: Send notification to users eduroam institution...')
-            db.processed.insert(
+            self.db.processed.insert(
                 infringement_id = incident_id,
                 internal_ip = internal_ip,
-                eduroam = true,
+                eduroam = True,
                 eduroam_user = username
             )
         else:
             cn, email = self.search_ldap(username)
             self.notify_user(email, notice)
-            db.processed.insert(
+            self.db.processed.insert(
                 infringement_id = incident_id,
                 internal_ip = internal_ip,
-                eduroam = false,
+                eduroam = False,
                 cn = cn
             )
         notice.status = 'processed'
-        db.commit()
+        self.db.commit()
         log.msg('Information inserted to db.')
 
     def search_flow(self, external_ip, port, timestamp):
@@ -92,8 +92,8 @@ class Manager:
             SELECT *
             FROM (
                 SELECT (flow.fields->>'sourceIPv4Address'::text)::inet AS internal_addr,
-                       flow."time" - (flow.uptime - ((flow.fields ->> 'flowStartSysUpTime'::text)::double precision)) * '00:00:00.001'::interval AS start_time,
-                       flow."time" - (flow.uptime - ((flow.fields ->> 'flowEndSysUpTime'::text)::double precision)) * '00:00:00.001'::interval AS stop_time
+                       flow."time" AT TIME ZONE 'GMT' - (flow.uptime  - ((flow.fields ->> 'flowStartSysUpTime'::text)::double precision)) * '00:00:00.001'::interval  AS start_time,
+                       flow."time" AT TIME ZONE 'GMT' - (flow.uptime  - ((flow.fields ->> 'flowEndSysUpTime'::text)::double precision)) * '00:00:00.001'::interval  AS stop_time
                 FROM flow
                 WHERE flow.fields @> json_build_object('postNATSourceIPv4Address', :addr, 'postNAPTSourceTransportPort', :port)::jsonb
             ) AS times
@@ -108,7 +108,7 @@ class Manager:
         """
 
         row = self.db_radius.execute('''
-            SELECT username, realm, user, description
+            SELECT username, realm, accounting.user, description
             FROM accounting
             WHERE framed_ip = :addr AND
                   start_time <= :ts AND
@@ -136,7 +136,7 @@ class Manager:
         conn = Connection(server, ldap_user, ldap_secret, auto_bind=True)
         conn.search(ldap_unit, '(&(objectclass=person)(uid=' + username + '))', attributes=['cn', 'mail'])
         entry = conn.entries[0]
-        mail = entry.mail.values[0]
+        email = entry.mail.values[0]
         cn = entry.cn.values[0]
 
         return cn, email
