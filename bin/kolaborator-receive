@@ -58,13 +58,30 @@ if __name__ == '__main__':
 
         # Walk through message and find xml in body
         for part in msg.walk():
-            if part.get_content_maintype() != 'multipart':
+            if not part.is_multipart():
                 text = part.get_payload(decode=True)
-                text = text.decode()
+                try:
+                    text = text.decode()
+                except:
+                    print(text)
+                    continue
                 beginning = text.find('<?xml')
                 end = text.find('</Infringement>')
                 if beginning >= 0 and end >= 0:
                     xml = text[beginning:end+15]
+            else:
+                for subpart in part.walk():
+                    if not subpart.is_multipart():
+                        text = part.get_payload(decode=True)
+                        try:
+                            text = text.decode()
+                        except:
+                            print(text)
+                            continue
+                        beginning = text.find('<?xml')
+                        end = text.find('</Infringement>')
+                        if beginning >= 0 and end >= 0:
+                            xml = text[beginning:end+15]
 
         # Try to parse ACNS notice, otherwise forward message
         try:
