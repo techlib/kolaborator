@@ -1,0 +1,20 @@
+Dear Sir or Madam,
+
+thank you for your report of suspicious activity that originated from our network.
+
+Time of the incindent: $timestamp
+IP address: $ip_address
+Port: $port
+
+We always try to investigate who is responsible for the reported activity and when we find out
+we warn them that in case of reccuring violation we will be forced to terminate their membership.
+If the traffic originated from eduroam network we try our best to notify their home institution of their aleged behaviour.
+
+Unfortunatly in this case we couldn't find who was responsible for the reported behaviour,
+either because we no longer have the data necessary to identify them (we store the data only for a limited time)
+or because they accesed our network anonymously through temporary network during some public event (conference, etc.).
+
+This is an automated message. If you want to contact us, please reply to this email.
+
+Department of IT
+National Technical Library

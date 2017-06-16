@@ -1,0 +1,32 @@
+Dear patron,
+recently we were notified about suspicious activity and through our logs we came to the conclusion that it happend using your credentials.
+
+Time of the activity: $timestamp
+Name of file: $filename
+
+Please cease any activity that is in conflict with library rules.
+
+In case that we will continue to get reports of malicous activity we might be forced to terminate your access to our network.
+
+This is automated message. If you want to contact us please reply to this email.
+
+Department of IT
+National Technical Library
+
+/
+
+Vážený uživateli,
+
+v nedávné době jsme dostali stížnost na aktivitu z naší sítě, která pocházela (dle našich záznamů) ze zařízení přihlášeného do naší sítě pomocí vašich přístupových údajů.
+
+Čas aktivity: $timestamp
+Název souboru: $filename
+
+Prosím přestaňte s jakoukoli aktivitou která je v rozporu s knihovním řádem.
+
+V případě, že obdržíme další stížnosti na vaši aktivitu, budeme muset podniknout další kroky, následkem čeho můžete i přijít o přístup do naší sítě.
+
+Toto je automatizovaná zpráva. V případě, že nás chcete kontaktovat prosím odpovězte na tento email.
+
+Oddělení ICT
+Národní Technická Knihovna
