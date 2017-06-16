@@ -53,8 +53,8 @@ if __name__ == '__main__':
                 msg_id = msg[key]
 
         # Save subject if it has Ticket number
-        if re.match(".*(T|t)icket.*",msg['Subject']):
-            subject = (msg['Subject'])
+        #if re.match(".*(T|t)icket.*",msg['Subject']):
+        subject = (msg['Subject'])
 
         # Walk through message and find xml in body
         for part in msg.walk():
