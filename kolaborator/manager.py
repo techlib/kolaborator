@@ -51,11 +51,15 @@ class Manager:
 
         notice = self.db.infringements.get(incident_id)
         internal_ip = self.search_flow(notice.ip_address, notice.port, notice.source_timestamp)
-
+        to_addr = notice.complainant_email
         if internal_ip is None:
             log.msg('''
                 Internal IP address for {ip_address}:{port} not found.
             '''.strip().format(**notice.__dict__))
+            notice.status = 'internal ip not found'
+            self.db.commit()
+            self.respond(to_addr, notice, None)
+            log.msg('Response about unsuccessful identification of user sent to complainant')
             return
 
         user, username, realm = self.search_radius(internal_ip, notice.source_timestamp)
@@ -70,18 +74,34 @@ class Manager:
                 eduroam = True,
                 eduroam_user = username
             )
-        else:
+        elif username is not None:
             cn, email = self.search_ldap(username)
-            self.notify_user(email, notice)
             self.db.processed.insert(
                 infringement_id = incident_id,
                 internal_ip = internal_ip,
                 eduroam = False,
                 cn = cn
             )
+            self.notify_user(email, notice)
+        else:
+            log.msg('User was not found and is not Eduroam')
+            self.db.processed.insert(
+                infringement_id = incident_id,
+                internal_ip = internal_ip,
+                eduroam = False
+            )
+            notice.status = 'user not found'
+            self.db.commit()
+            self.respond(to_addr, notice, None)
+            log.msg('Response about unsuccessful identification of user sent to complainant')
+            return
         notice.status = 'processed'
         self.db.commit()
         log.msg('Information inserted to db.')
+
+        self.respond(to_addr, notice, 'success')
+        log.msg('Response about successful notification of user sent to complainant')
+        return
 
     def search_flow(self, external_ip, port, timestamp):
         """
@@ -138,6 +158,7 @@ class Manager:
         entry = conn.entries[0]
         email = entry.mail.values[0]
         cn = entry.cn.values[0]
+        log.msg('Perpetrator: CN={cn} email={email}'.format(**locals()))
 
         return cn, email
 
@@ -153,15 +174,57 @@ class Manager:
 
         from_addr = self.config.get('email', 'from')
         msg = MIMEMultipart()
-        msg['Subject'] = "Some clever subject"
+        msg['Subject'] = "Upozornění na možné porušení knihovního řádu / Notification of possible violation of Library Rules"
         msg['From'] = from_addr
         msg['To'] = to_addr
 
-        message_template = open( '../email_templates/notify_user' )
+        message_template = open( 'email_templates/message_for_user' )
         d = { 'filename':notice.filename, 'timestamp':notice.source_timestamp }
 
         text = Template( message_template.read() ).substitute(d)
 
+        message_template.close()
+
+        part = MIMEText(text, 'plain')
+        msg.attach(part)
+
+        smtp = smtplib.SMTP(smtp_host, smtp_port)
+        smtp.starttls()
+        smtp.login(smtp_user, smtp_passwd)
+
+        smtp.sendmail(from_addr, to_addr, msg.as_string())
+        smtp.quit()
+
+        return
+
+def respond(self, to_addr, notice, is_found):
+        """
+        Respond to the DMCA Request
+        """
+        smtp_host = self.config.get('email', 'url')
+        smtp_port = self.config.get('email', 'port')
+        smtp_user = self.config.get('email', 'user')
+        smtp_passwd = self.config.get('email', 'password')
+
+        from_addr = self.config.get('email', 'from')
+        msg = MIMEMultipart()
+        msg['From'] = from_addr
+        msg['To'] = to_addr
+
+
+        msg['Subject'] = "Re:" + notice.subject
+
+
+        if is_found:
+            message_template = open( 'email_templates/response_to_complainant_success' )
+        else:
+            message_template = open( 'email_templates/response_to_complainant_unsuccessful' )
+
+
+
+        d = { 'ip_address':notice.ip_address,'port': notice.port, 'timestamp':notice.source_timestamp }
+
+        text = Template( message_template.read() ).substitute(d)
         message_template.close()
 
         part = MIMEText(text, 'plain')
