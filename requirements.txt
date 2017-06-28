@@ -2,3 +2,4 @@ sqlsoup
 sqlalchemy
 twisted
 txpostgres
+ldap3
