@@ -16,7 +16,7 @@ from email.mime.text import MIMEText
 __all__ = ['Manager']
 
 
-template_path = join(dirname(__path__), 'templates')
+template_path = join(dirname(__file__), 'templates')
 
 
 class Manager:
