@@ -1,18 +1,22 @@
 #!/usr/bin/python3 -tt
 # -*- coding: utf-8 -*-
 
+from os.path import dirname, join
+
 from twisted.internet.task import LoopingCall
 from twisted.internet import reactor
 from twisted.python import log
 
 from ldap3 import Server, Connection, ALL
-
-import smtplib
+from smtplib import SMTP
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 __all__ = ['Manager']
+
+
+template_path = join(dirname(__path__), 'templates')
 
 
 class Manager:
@@ -176,7 +180,7 @@ class Manager:
         msg['From'] = from_addr
         msg['To'] = to_addr
 
-        with open('email_templates/message_for_user') as fp:
+        with open(join(template_path, 'user-notice')) as fp:
             template = fp.read()
 
         text = template.format(filename=notice.filename,
@@ -185,7 +189,7 @@ class Manager:
         part = MIMEText(text, 'plain')
         msg.attach(part)
 
-        smtp = smtplib.SMTP(smtp_host, smtp_port)
+        smtp = SMTP(smtp_host, smtp_port)
         smtp.starttls()
         smtp.login(smtp_user, smtp_passwd)
 
@@ -213,10 +217,10 @@ def respond(self, to_addr, notice, is_found):
 
 
         if is_found:
-            with open('email_templates/response_to_complainant_success') as fp:
+            with open(join(template_path, 'success-reply')) as fp:
                 template = fp.read()
         else:
-            with open('email_templates/response_to_complainant_unsuccessful') as fp:
+            with open(join(template_path, 'failure-reply')) as fp:
                 template = fp.read()
 
         text = template.format(ip_address=notice.ip_address,
@@ -226,7 +230,7 @@ def respond(self, to_addr, notice, is_found):
         part = MIMEText(text, 'plain')
         msg.attach(part)
 
-        smtp = smtplib.SMTP(smtp_host, smtp_port)
+        smtp = SMTP(smtp_host, smtp_port)
         smtp.starttls()
         smtp.login(smtp_user, smtp_passwd)
 
