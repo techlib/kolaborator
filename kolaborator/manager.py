@@ -12,8 +12,6 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from string import Template
-
 __all__ = ['Manager']
 
 
@@ -178,12 +176,11 @@ class Manager:
         msg['From'] = from_addr
         msg['To'] = to_addr
 
-        message_template = open( 'email_templates/message_for_user' )
-        d = { 'filename':notice.filename, 'timestamp':notice.source_timestamp }
+        with open('email_templates/message_for_user') as fp:
+            template = fp.read()
 
-        text = Template( message_template.read() ).substitute(d)
-
-        message_template.close()
+        text = template.format(filename=notice.filename,
+                               timestamp=notice.source_timestamp)
 
         part = MIMEText(text, 'plain')
         msg.attach(part)
@@ -216,16 +213,15 @@ def respond(self, to_addr, notice, is_found):
 
 
         if is_found:
-            message_template = open( 'email_templates/response_to_complainant_success' )
+            with open('email_templates/response_to_complainant_success') as fp:
+                template = fp.read()
         else:
-            message_template = open( 'email_templates/response_to_complainant_unsuccessful' )
+            with open('email_templates/response_to_complainant_unsuccessful') as fp:
+                template = fp.read()
 
-
-
-        d = { 'ip_address':notice.ip_address,'port': notice.port, 'timestamp':notice.source_timestamp }
-
-        text = Template( message_template.read() ).substitute(d)
-        message_template.close()
+        text = template.format(ip_address=notice.ip_address,
+                               port=notice.port,
+                               timestamp=notice.source_timestamp)
 
         part = MIMEText(text, 'plain')
         msg.attach(part)

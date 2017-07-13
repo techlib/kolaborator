@@ -2,14 +2,13 @@ Dear Sir or Madam,
 
 thank you for your report of suspicious activity that originated from our network.
 
-Time of the incindent: $timestamp
-IP address: $ip_address
-Port: $port
+Time of the incindent: {timestamp}
+IP address: {ip_address}
+Port: {port}
 
-We identified the responsible user and notified him, that we will be forced to take further action 
-(eg. suspend access to our network) in case of reccurence.
+We have identified the responsible user and notified him that we will be forced to take further action (eg. suspend access to our network) in case of recurrence.
 
-This is an automated message. If you want to contact us, please reply to this email.
+This is an automated message. If you wish to contact us, please reply to this email.
 
-Department of IT
-National Technical Library
+Department of ICT
+National Library of Technology

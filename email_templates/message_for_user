@@ -1,32 +1,33 @@
 Dear patron,
-recently we were notified about suspicious activity and through our logs we came to the conclusion that it happend using your credentials.
 
-Time of the activity: $timestamp
-Name of file: $filename
+we were recently notified about a suspicious activity. Our automated log analysis have linked the activity to your account.
 
-Please cease any activity that is in conflict with library rules.
+Time of the activity: {timestamp}
+Name of file: {filename}
 
-In case that we will continue to get reports of malicous activity we might be forced to terminate your access to our network.
+Please cease any and all activity conflicting with library rules.
 
-This is automated message. If you want to contact us please reply to this email.
+If we receive another such report, we will start an investigation that may result in termination of your access to the library.
 
-Department of IT
-National Technical Library
+This is an automated message. If you wish to contact us, please reply to this email.
+
+Department of ICT
+National Library of Technology
 
 /
 
 Vážený uživateli,
 
-v nedávné době jsme dostali stížnost na aktivitu z naší sítě, která pocházela (dle našich záznamů) ze zařízení přihlášeného do naší sítě pomocí vašich přístupových údajů.
+v nedávné době jsme obdrželi stížnost na podezřelou síťovou aktivitu. Naše automatická analýza logů naznačuje, že jejím původcem je Váš účet.
 
-Čas aktivity: $timestamp
-Název souboru: $filename
+Čas aktivity: {timestamp}
+Název souboru: {filename}
 
-Prosím přestaňte s jakoukoli aktivitou která je v rozporu s knihovním řádem.
+Prosím zanechte jakékoliv aktivity, která je v rozporu s knihovním řádem.
 
-V případě, že obdržíme další stížnosti na vaši aktivitu, budeme muset podniknout další kroky, následkem čeho můžete i přijít o přístup do naší sítě.
+Pokud obdržíme další takové hlášení, budeme nuceni zahájit řízení, které by mohlo vyústit v zákaz přístupu do knihovny.
 
-Toto je automatizovaná zpráva. V případě, že nás chcete kontaktovat prosím odpovězte na tento email.
+Toto je automatizovaná zpráva. V případě, že nás chcete kontaktovat, odpovězte prosím na tento email.
 
 Oddělení ICT
 Národní Technická Knihovna
